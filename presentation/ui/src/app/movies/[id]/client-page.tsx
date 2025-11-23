@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -15,45 +13,52 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell
+    Table,
+    TableHeader,
+    TableHead,
+    TableRow,
+    TableBody,
+    TableCell
 } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MovieChat } from '@/components/movie-chat';
+import { YouTubePlayerWrapper } from '@/components/youtube-player-wrapper';
+
+const getYouTubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+};
 
 const CategorySection = ({ title, items, icon }: { title: string; items: (string | Person)[] | undefined; icon: React.ReactNode }) => {
-  if (!items || items.length === 0) return null;
+    if (!items || items.length === 0) return null;
 
-  const renderItem = (item: string | Person) => {
-    if (typeof item === 'string') {
-        return item;
+    const renderItem = (item: string | Person) => {
+        if (typeof item === 'string') {
+            return item;
+        }
+        // This is for the 'people' array which has a different structure
+        if ('person' in item) {
+            return `${item.person} (${item.role})`;
+        }
+        return '';
     }
-    // This is for the 'people' array which has a different structure
-    if ('person' in item) { 
-        return `${item.person} (${item.role})`;
-    }
-    return '';
-  }
 
-  return (
-    <div>
-        <h3 className="text-xl font-semibold flex items-center gap-2 mb-3">
-            {icon}
-            {title}
-        </h3>
-        <div className="flex flex-wrap gap-2">
-            {items.map((item, index) => (
-            <Badge key={index} variant="secondary" className="text-sm">
-                {renderItem(item)}
-            </Badge>
-            ))}
+    return (
+        <div>
+            <h3 className="text-xl font-semibold flex items-center gap-2 mb-3">
+                {icon}
+                {title}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+                {items.map((item, index) => (
+                    <Badge key={index} variant="secondary" className="text-sm">
+                        {renderItem(item)}
+                    </Badge>
+                ))}
+            </div>
         </div>
-    </div>
-  );
+    );
 };
 
 const CharacterTable = ({ characters }: { characters: Character[] | undefined }) => {
@@ -93,18 +98,18 @@ const parseTimeToSeconds = (time: string | number): number => {
     const parts = time.split(/[:.]/).map(part => parseInt(part, 10));
     // Handles HH:MM:SS.ms, MM:SS:ms, and MM:SS
     if (parts.length >= 2) {
-      if (parts.length >= 3) {
-         const [p1, p2, p3] = parts;
-         // Handle MM:SS:ms format
-         if (p1 <= 59 && p2 <= 59) {
-             return (p1 * 60) + p2;
-         }
-         // Handle HH:MM:SS format
-         return (p1 * 3600) + (p2 * 60) + p3;
-      }
-      // MM:SS
-      const [minutes, seconds] = parts;
-      return (minutes * 60) + seconds;
+        if (parts.length >= 3) {
+            const [p1, p2, p3] = parts;
+            // Handle MM:SS:ms format
+            if (p1 <= 59 && p2 <= 59) {
+                return (p1 * 60) + p2;
+            }
+            // Handle HH:MM:SS format
+            return (p1 * 3600) + (p2 * 60) + p3;
+        }
+        // MM:SS
+        const [minutes, seconds] = parts;
+        return (minutes * 60) + seconds;
     }
     return 0; // Default case
 };
@@ -176,7 +181,7 @@ const ChapterTable = ({ sections, onSeek }: { sections: Section[] | undefined, o
                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
-                     <p className="text-sm font-medium text-muted-foreground">Filter by type:</p>
+                    <p className="text-sm font-medium text-muted-foreground">Filter by type:</p>
                     {chapterTypes.map(type => (
                         <Button
                             key={type}
@@ -221,7 +226,7 @@ const ChapterTable = ({ sections, onSeek }: { sections: Section[] | undefined, o
                         ))}
                     </TableBody>
                 </Table>
-                 {filteredSections.length === 0 && (
+                {filteredSections.length === 0 && (
                     <div className="text-center p-10 text-muted-foreground">
                         No chapters found matching your criteria.
                     </div>
@@ -245,7 +250,7 @@ const TranscriptionView = ({ words, onSeek }: { words: TranscriptionWord[] | und
             highlighted: w.word.toLowerCase().includes(query)
         }));
     }, [words, searchQuery]);
-    
+
     if (!words || words.length === 0) {
         return (
             <div className="text-center py-10 border-2 border-dashed rounded-lg">
@@ -277,7 +282,7 @@ const TranscriptionView = ({ words, onSeek }: { words: TranscriptionWord[] | und
         <div>
             <h2 className="text-3xl font-bold tracking-tight mb-6">Transcription</h2>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                 <div className="relative w-full sm:max-w-xs">
+                <div className="relative w-full sm:max-w-xs">
                     <Input
                         placeholder="Search transcription..."
                         value={searchQuery}
@@ -290,15 +295,15 @@ const TranscriptionView = ({ words, onSeek }: { words: TranscriptionWord[] | und
 
             <Card>
                 <CardContent className="p-6 relative">
-                     <div className={`text-lg leading-relaxed ${!isExpanded ? 'max-h-48 overflow-hidden' : ''}`}>
+                    <div className={`text-lg leading-relaxed ${!isExpanded ? 'max-h-48 overflow-hidden' : ''}`}>
                         <p>
-                        {highlightedWords.map((word, index) => (
-                            <WordComponent key={index} word={word} index={index} />
-                        ))}
+                            {highlightedWords.map((word, index) => (
+                                <WordComponent key={index} word={word} index={index} />
+                            ))}
                         </p>
                     </div>
                     {!isExpanded && (
-                         <div className="absolute bottom-6 left-6 right-6 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                        <div className="absolute bottom-6 left-6 right-6 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
                     )}
                     <div className="flex justify-center pt-4">
                         <Button
@@ -307,13 +312,13 @@ const TranscriptionView = ({ words, onSeek }: { words: TranscriptionWord[] | und
                         >
                             {isExpanded ? (
                                 <>
-                                 <ChevronUp className="mr-2" />
-                                 Show Less
+                                    <ChevronUp className="mr-2" />
+                                    Show Less
                                 </>
                             ) : (
                                 <>
-                                <ChevronDown className="mr-2" />
-                                Show More
+                                    <ChevronDown className="mr-2" />
+                                    Show More
                                 </>
                             )}
                         </Button>
@@ -332,173 +337,199 @@ interface LoadingState {
 }
 
 export function MovieClientPage({ movie }: { movie: Movie }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [loadingState, setLoadingState] = useState<LoadingState>({ isLoading: false, segment: 0, timestamp: '00:00' });
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [loadingState, setLoadingState] = useState<LoadingState>({ isLoading: false, segment: 0, timestamp: '00:00' });
+    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [player, setPlayer] = useState<any>(null);
 
 
-  const handleAddShort = (newShort: Short) => {
-    // This functionality is now deprecated as shorts are derived from `previews`
-  };
+    const handleAddShort = (newShort: Short) => {
+        // This functionality is now deprecated as shorts are derived from `previews`
+    };
 
-  const handleSeekTo = (timeInSeconds: number, displayTime: string, segment: number) => {
-      const video = videoRef.current;
-      if (video) {
-          setLoadingState({ isLoading: true, segment: segment, timestamp: displayTime });
-          
-          const onSeeked = () => {
-              video.play();
-              if (loadingTimeoutRef.current) {
-                  clearTimeout(loadingTimeoutRef.current);
-              }
-              loadingTimeoutRef.current = setTimeout(() => {
-                  setLoadingState({ isLoading: false, segment: 0, timestamp: '00:00' });
-              }, 1500); // Shorter delay after playback starts
-              video.removeEventListener('seeked', onSeeked);
-          };
+    const handleSeekTo = (timeInSeconds: number, displayTime: string, segment: number) => {
+        if (movie.source === 'youtube' && player) {
+            setLoadingState({ isLoading: true, segment: segment, timestamp: displayTime });
+            player.seekTo(timeInSeconds, true);
+            player.playVideo();
 
-          video.addEventListener('seeked', onSeeked, { once: true });
-          video.currentTime = timeInSeconds;
-      }
-  };
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+            }
+            loadingTimeoutRef.current = setTimeout(() => {
+                setLoadingState({ isLoading: false, segment: 0, timestamp: '00:00' });
+            }, 1500);
+            return;
+        }
 
-  useEffect(() => {
-      // Clear timeout on unmount
-      return () => {
-          if (loadingTimeoutRef.current) {
-              clearTimeout(loadingTimeoutRef.current);
-          }
-      };
-  }, []);
+        const video = videoRef.current;
+        if (video) {
+            setLoadingState({ isLoading: true, segment: segment, timestamp: displayTime });
 
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-12">
-        <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
-          <Image
-            src={movie.poster_url}
-            alt={movie.file_name}
-            data-ai-hint="movie poster"
-            width={500}
-            height={750}
-            className="rounded-lg shadow-2xl w-full"
-          />
-        </div>
-        <div className="flex-grow">
-            <div className="flex justify-between items-start">
-                <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight mb-4">
-                    {movie.file_name}
-                </h1>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="outline">
-                            <Bot className="mr-2 h-5 w-5" />
-                            Ask AI
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Ask AI about {movie.file_name}</DialogTitle>
-                            <DialogDescription>
-                                You can ask questions about actors, plot points, reviews, or anything else you can think of.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <MovieChat
-                            initialQuery={`Tell me more about the movie "${movie.file_name}". What is it about and who are the main actors?`}
+            const onSeeked = () => {
+                video.play();
+                if (loadingTimeoutRef.current) {
+                    clearTimeout(loadingTimeoutRef.current);
+                }
+                loadingTimeoutRef.current = setTimeout(() => {
+                    setLoadingState({ isLoading: false, segment: 0, timestamp: '00:00' });
+                }, 1500); // Shorter delay after playback starts
+                video.removeEventListener('seeked', onSeeked);
+            };
+
+            video.addEventListener('seeked', onSeeked, { once: true });
+            video.currentTime = timeInSeconds;
+        }
+    };
+
+    useEffect(() => {
+        // Clear timeout on unmount
+        return () => {
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const isYouTube = movie.source === 'youtube';
+    const videoId = isYouTube ? getYouTubeId(movie.public_url) : null;
+
+    return (
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-12">
+                <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+                    <Image
+                        src={movie.poster_url}
+                        alt={movie.file_name}
+                        data-ai-hint="movie poster"
+                        width={500}
+                        height={750}
+                        className="rounded-lg shadow-2xl w-full"
+                    />
+                </div>
+                <div className="flex-grow">
+                    <div className="flex justify-between items-start">
+                        <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight mb-4">
+                            {movie.file_name}
+                        </h1>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Bot className="mr-2 h-5 w-5" />
+                                    Ask AI
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Ask AI about {movie.file_name}</DialogTitle>
+                                    <DialogDescription>
+                                        You can ask questions about actors, plot points, reviews, or anything else you can think of.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <MovieChat
+                                    initialQuery={`Tell me more about the movie "${movie.file_name}". What is it about and who are the main actors?`}
+                                />
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {movie.summary.video_mood?.map(mood => <Badge key={mood} variant="secondary">{mood}</Badge>)}
+                    </div>
+                    <p className="text-lg text-muted-foreground mt-4">
+                        {movie.summary.summary}
+                    </p>
+                </div>
+            </div>
+
+            <div className="mb-12">
+                <h2 className="text-3xl font-bold tracking-tight mb-4">Full Video</h2>
+                <div className="relative aspect-video w-full bg-black rounded-lg overflow-hidden">
+                    {isYouTube && videoId ? (
+                        <YouTubePlayerWrapper
+                            videoId={videoId}
+                            className="w-full h-full"
+                            onReady={(player) => setPlayer(player)}
                         />
-                    </DialogContent>
-                </Dialog>
-            </div>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {movie.summary.video_mood?.map(mood => <Badge key={mood} variant="secondary">{mood}</Badge>)}
-          </div>
-          <p className="text-lg text-muted-foreground mt-4">
-            {movie.summary.summary}
-          </p>
-        </div>
-      </div>
-
-       <div className="mb-12">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">Full Video</h2>
-            <div className="relative aspect-video w-full bg-black rounded-lg overflow-hidden">
-                <video
-                    ref={videoRef}
-                    src={movie.public_url}
-                    controls
-                    className="w-full h-full"
-                />
-                 {loadingState.isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 z-10">
-                        <div className="flex flex-col items-center gap-4 text-white">
-                            <Loader2 className="h-10 w-10 animate-spin" />
-                            <p className="text-lg font-semibold">
-                                {loadingState.segment > 0 ? `Loading segment ${loadingState.segment}`: 'Seeking to time'}
-                            </p>
-                            <p className="text-2xl font-mono bg-black/50 px-3 py-1 rounded-md">
-                                {loadingState.timestamp}
-                            </p>
+                    ) : (
+                        <video
+                            ref={videoRef}
+                            src={movie.public_url}
+                            controls
+                            className="w-full h-full"
+                        />
+                    )}
+                    {loadingState.isLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 z-20 pointer-events-none">
+                            <div className="flex flex-col items-center gap-4 text-white">
+                                <Loader2 className="h-10 w-10 animate-spin" />
+                                <p className="text-lg font-semibold">
+                                    {loadingState.segment > 0 ? `Loading segment ${loadingState.segment}` : 'Seeking to time'}
+                                </p>
+                                <p className="text-2xl font-mono bg-black/50 px-3 py-1 rounded-md">
+                                    {loadingState.timestamp}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
+
+            <Tabs defaultValue="shorts" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 max-w-lg mb-6">
+                    <TabsTrigger value="shorts">Shorts</TabsTrigger>
+                    <TabsTrigger value="chapters">Chapters</TabsTrigger>
+                    <TabsTrigger value="transcription">Transcription</TabsTrigger>
+                    <TabsTrigger value="categorization">Categorization</TabsTrigger>
+                </TabsList>
+                <TabsContent value="shorts">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-bold tracking-tight">Shorts</h2>
+                        <AddShortWizard movie={movie} onAddShort={handleAddShort}>
+                            <Button disabled>
+                                <PlusCircle className="mr-2 h-5 w-5" />
+                                Add Short (Auto-generated)
+                            </Button>
+                        </AddShortWizard>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                        {movie.previews.clips.map((clip, index) => (
+                            <ShortListItem key={`${movie.id}-short-${index}`} short={{
+                                id: `${movie.id}-short-${index}`,
+                                title: clip.summary,
+                                description: clip.user_description,
+                                startTime: clip.start_timecode,
+                                endTime: clip.end_timecode,
+                                videoUrl: movie.public_url,
+                                thumbnailUrl: movie.poster_url, // Use main poster as fallback
+                                categories: clip.emotions_triggered,
+                            }} />
+                        ))}
+                        {movie.previews.clips.length === 0 && (
+                            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">No shorts have been generated for this movie yet.</p>
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="chapters">
+                    <ChapterTable sections={movie.summary.sections} onSeek={handleSeekTo} />
+                </TabsContent>
+                <TabsContent value="transcription">
+                    <TranscriptionView words={movie.transcription?.words} onSeek={handleSeekTo} />
+                </TabsContent>
+                <TabsContent value="categorization">
+                    <h2 className="text-3xl font-bold tracking-tight mb-6">Details</h2>
+                    <Card>
+                        <CardContent className="p-6 space-y-8">
+                            <CharacterTable characters={movie.summary.character} />
+                            <CategorySection title="Video Mood" items={movie.summary.video_mood} icon={<ThumbsUp />} />
+                            <CategorySection title="Themes" items={movie.summary.theme} icon={<BookOpen />} />
+                            <CategorySection title="Subjects" items={movie.summary.subject} icon={<Tag />} />
+                            <CategorySection title="Practices" items={movie.summary.practice} icon={<Clapperboard />} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
-      
-      <Tabs defaultValue="shorts" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-lg mb-6">
-            <TabsTrigger value="shorts">Shorts</TabsTrigger>
-            <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            <TabsTrigger value="transcription">Transcription</TabsTrigger>
-            <TabsTrigger value="categorization">Categorization</TabsTrigger>
-        </TabsList>
-        <TabsContent value="shorts">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold tracking-tight">Shorts</h2>
-                <AddShortWizard movie={movie} onAddShort={handleAddShort}>
-                    <Button disabled>
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Add Short (Auto-generated)
-                    </Button>
-                </AddShortWizard>
-            </div>
-            <div className="flex flex-col gap-4">
-                {movie.previews.clips.map((clip, index) => (
-                    <ShortListItem key={`${movie.id}-short-${index}`} short={{
-                        id: `${movie.id}-short-${index}`,
-                        title: clip.summary,
-                        description: clip.user_description,
-                        startTime: clip.start_timecode,
-                        endTime: clip.end_timecode,
-                        videoUrl: movie.public_url,
-                        thumbnailUrl: movie.poster_url, // Use main poster as fallback
-                        categories: clip.emotions_triggered,
-                    }} />
-                ))}
-                {movie.previews.clips.length === 0 && (
-                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">No shorts have been generated for this movie yet.</p>
-                    </div>
-                )}
-            </div>
-        </TabsContent>
-         <TabsContent value="chapters">
-            <ChapterTable sections={movie.summary.sections} onSeek={handleSeekTo}/>
-        </TabsContent>
-        <TabsContent value="transcription">
-            <TranscriptionView words={movie.transcription?.words} onSeek={handleSeekTo} />
-        </TabsContent>
-        <TabsContent value="categorization">
-             <h2 className="text-3xl font-bold tracking-tight mb-6">Details</h2>
-            <Card>
-                <CardContent className="p-6 space-y-8">
-                    <CharacterTable characters={movie.summary.character} />
-                    <CategorySection title="Video Mood" items={movie.summary.video_mood} icon={<ThumbsUp />} />
-                    <CategorySection title="Themes" items={movie.summary.theme} icon={<BookOpen />} />
-                    <CategorySection title="Subjects" items={movie.summary.subject} icon={<Tag />} />
-                    <CategorySection title="Practices" items={movie.summary.practice} icon={<Clapperboard />} />
-                </CardContent>
-            </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+    );
 }

@@ -23,18 +23,25 @@ const storage = new Storage();
 
 app.get('/api/movies', async (req, res) => {
   try {
-    
+
     const collectionName = process.env.FIRESTORE_COLLECTION || 'media_assets';
     const moviesCollection = db.collection(collectionName);
     const snapshot = await moviesCollection.get();
     if (snapshot.empty) {
-      
+
       return res.status(404).send('No movies found');
     }
     const movies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const moviesWithSignedUrls = await Promise.all(movies.map(async (movie) => {
-      if ((!movie.public_url || !movie.public_url.startsWith('https://storage.googleapis.com/')) && movie.file_path) {
+      if (movie.source === 'youtube') {
+        if (!movie.public_url && movie.file_path) {
+          movie.public_url = movie.file_path;
+        }
+        return movie;
+      }
+
+      if ((!movie.public_url || !movie.public_url.startsWith('https://storage.googleapis.com/')) && movie.file_path && movie.file_path.startsWith('gs://')) {
         try {
           const [bucketName, ...filePathParts] = movie.file_path.replace('gs://', '').split('/');
           const gcsPath = filePathParts.join('/');
@@ -53,7 +60,7 @@ app.get('/api/movies', async (req, res) => {
       return movie;
     }));
 
-    
+
     res.json(moviesWithSignedUrls);
   } catch (error) {
     logger.error('Error fetching movies:', error);
@@ -63,7 +70,7 @@ app.get('/api/movies', async (req, res) => {
 
 app.get('/api/search', async (req, res) => {
   const { q } = req.query;
-  
+
   if (!q) {
     return res.status(400).send('Query parameter "q" is required');
   }
@@ -71,7 +78,7 @@ app.get('/api/search', async (req, res) => {
     logger.log('Search query: ', q)
     const results = await searchVAIS(q);
     logger.log('Search query provided results.')
-    
+
     res.json(results);
   } catch (error) {
     logger.error('Error in search endpoint:', error);
@@ -89,10 +96,10 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3001;
 
 io.on('connection', (socket) => {
-  
+
 
   socket.on('disconnect', () => {
-    
+
   });
 
   socket.on('chat message', async (msg) => {
@@ -107,5 +114,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  
+
 });

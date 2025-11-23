@@ -84,6 +84,7 @@ export interface Movie {
   previews: MoviePreviews;
   transcription?: Transcription;
   is_dummy?: boolean;
+  source?: string;
   contentType: 'tv_show' | 'movie' | 'sports' | 'highlight';
 }
 
