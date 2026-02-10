@@ -30,7 +30,10 @@ export async function search(query: string) {
   logger.log(`search ${query}`);
   const searchParams = new URLSearchParams({ q: query });
   const result = await fetchApi(`/api/search?${searchParams.toString()}`)
-  logger.log(`search returned results: ${result.toString()}`)
+  //print through summary in the results object
+  logger.log(`summary: ${result.summary}`)
+  logger.log(`results: ${JSON.stringify(result.results,null, 2)}`)
+  // logger.log(`search returned results: ${JSON.stringify(result, null, 2)}`);
   return result ;
 }
 
