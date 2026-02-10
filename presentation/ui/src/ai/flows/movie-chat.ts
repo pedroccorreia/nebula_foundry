@@ -15,7 +15,7 @@ import { genkit } from 'genkit';
 import { z } from 'zod';
 
 const ai = genkit({
-  plugins: [vertexAI({ location: 'us-central1', projectId : 'yoursampleprojectid' })],
+  plugins: [vertexAI({ location: 'us-central1', projectId : process.env.NEXT_PUBLIC_PROJECT_ID })],
 });
 
 const MovieChatInputSchema = z.object({

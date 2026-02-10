@@ -16,8 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const navItems = [
   { href: "/browse", label: "Home" },
-  { href: "/movies", label: "Movies" },
-  { href: "/inspire-me", label: "What to Watch" },
+  { href: "/movies", label: "Media" },
+  { href: "/inspire-me", label: "Inspire Me" },
+  { href: "/architecture", label: "About" },
 ];
 
 const SearchFallback = () => {
